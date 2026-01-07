@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UmmahTech Directory</title>
+    <link rel="stylesheet" href="main.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="glass-background"></div>
+    
+    <div class="container">
+        <header>
+            <h1>UmmahTech Directory</h1>
+            <p>The curated list of Shariah-compliant software & businesses.</p>
+        </header>
+
+        <section id="visual-map" class="glass-panel">
+            <!-- Visual Node Map will be rendered here -->
+            <canvas id="mapCanvas"></canvas>
+             <div class="map-overlay">Ecosystem Map</div>
+        </section>
+
+        <div class="controls glass-panel">
+            <input type="text" id="searchInput" placeholder="Search technology, companies..." class="glass-input">
+            <div id="categoryFilters" class="category-filters">
+                <button class="glass-btn active" data-category="">All</button>
+                <!-- Categories injected here -->
+            </div>
+        </div>
+
+        <main id="gridContainer" class="grid-container">
+            <!-- Product Cards injected here -->
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
