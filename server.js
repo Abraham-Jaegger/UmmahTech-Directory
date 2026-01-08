@@ -7,33 +7,56 @@ const fs = require('fs');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// PostgreSQL Connection
+// PostgreSQL Connection Pool using environment variables
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
 });
 
-app.use(express.static('public'));
-app.use(express.json());
+app.use(express.static('public')); // Serve static frontend files
+app.use(express.json()); // Parse JSON request bodies
 
-// Init DB Helper (for demo purposes)
+/**
+ * Endpoint: Initialize Database
+ * Runs the schema, seed, and full seed SQL files to reset the DB.
+ * Returns the count of products injected.
+ */
 app.post('/api/init-db', async (req, res) => {
     try {
+        console.log('Initializing database...');
         const schema = fs.readFileSync(path.join(__dirname, 'db', 'schema.sql'), 'utf8');
         const seed = fs.readFileSync(path.join(__dirname, 'db', 'seed.sql'), 'utf8');
+        const seedFull = fs.readFileSync(path.join(__dirname, 'db', 'seed_full.sql'), 'utf8');
+
+        console.log('Running Schema...');
         await pool.query(schema);
+
+        console.log('Running Seed...');
         await pool.query(seed);
-        res.json({ message: 'Database initialized successfully' });
+
+        console.log('Running Full Seed...');
+        await pool.query(seedFull);
+
+        const countRes = await pool.query('SELECT COUNT(*) FROM products');
+        const count = countRes.rows[0].count;
+        console.log('Total Products:', count);
+
+        res.json({ message: 'Database initialized successfully', products: count });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
+        console.error('Init DB Error:', err);
+        res.status(500).json({ error: err.message, stack: err.stack });
     }
 });
 
-// API: Get Directory Data
+/**
+ * Endpoint: Get Directory Data
+ * Fetches products with optional filtering by search term or category.
+ * Joins multiple tables (products, organizations, categories, tech_stack) to returns a rich object.
+ */
 app.get('/api/directory', async (req, res) => {
     try {
         const { search, category } = req.query;
 
+        // Base query with JOINS to fetch related data
         let query = `
             SELECT 
                 p.id, p.name, p.product_type, p.description, p.website_url,
@@ -52,6 +75,7 @@ app.get('/api/directory', async (req, res) => {
         const values = [];
         let paramCount = 1;
 
+        // Dynamic filtering based on query params
         if (search) {
             query += ` AND (p.name ILIKE $${paramCount} OR p.description ILIKE $${paramCount} OR o.name ILIKE $${paramCount})`;
             values.push(`%${search}%`);
@@ -75,7 +99,14 @@ app.get('/api/directory', async (req, res) => {
 // API: Get Categories
 app.get('/api/categories', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM categories ORDER BY name');
+        const query = `
+            SELECT c.*, COUNT(p.id)::int as product_count 
+            FROM categories c 
+            LEFT JOIN products p ON c.id = p.category_id 
+            GROUP BY c.id 
+            ORDER BY c.name
+        `;
+        const result = await pool.query(query);
         res.json(result.rows);
     } catch (err) {
         console.error(err);
