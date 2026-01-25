@@ -89,6 +89,42 @@ The project features a unique **interactive ecosystem map** that visualizes the 
 
 ---
 
+## 🐳 Development Setup (Docker)
+
+Quick setup using Docker for Postgres:
+
+```bash
+# Start Postgres container
+docker run -d \
+  --name ummahtech-db \
+  -e POSTGRES_USER=ummahtech \
+  -e POSTGRES_PASSWORD=ummahtech \
+  -e POSTGRES_DB=ummahtech \
+  -p 5432:5432 \
+  postgres:16-alpine
+
+# Update .env
+echo "DATABASE_URL=postgres://ummahtech:ummahtech@localhost:5432/ummahtech" > .env
+echo "PORT=3000" >> .env
+
+# Install & run
+npm install
+npm start
+
+# Init database (in another terminal)
+curl -X POST http://localhost:3000/api/init-db
+```
+
+**Useful commands:**
+```bash
+docker stop ummahtech-db    # Stop container
+docker start ummahtech-db   # Start again
+docker rm ummahtech-db      # Remove container
+docker logs ummahtech-db    # View logs
+```
+
+---
+
 ## 📸 Usage
 
 - **Browse**: Scroll through the grid of cards to see all listed companies.
